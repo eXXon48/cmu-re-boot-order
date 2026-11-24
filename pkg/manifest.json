@@ -1,0 +1,33 @@
+{
+  "formatVersion": 1,
+  "name": "cmu-re-boot-order",
+  "version": "0.0.0",
+  "author": "CMU-Revised",
+  "targetCMU": "74.00.324A",
+  "category": "System mods",
+  "description": "Reorders the service start so the Home screen, Android Auto and CarPlay come sooner: the update and resource services Android Auto needs start early, Android Auto no longer waits for Bluetooth, MMUI no longer waits for the radio and AUX services, navigation starts after CarPlay, and diagnostics, the display link, USB music, DAB and AUX start after the Home screen. The device manager and Android Auto run on the second CPU core, which has spare time during boot. Uninstall and restart to get the stock behaviour back.",
+  "minDaemon": "0.1.0",
+  "depends": "cmu-re-store (>= 0.13.4)",
+  "conflicts": "",
+  "restart": true,
+  "files": [
+    {
+      "live": "/jci/sm/sm.conf",
+      "payload": "payload/sm.json",
+      "mode": "0755",
+      "owner": "1000:1000",
+      "type": "modify",
+      "apply": "xml-node",
+      "reason": "service start reordered for a sooner Home screen, Android Auto and CarPlay"
+    },
+    {
+      "live": "/jci/sm/sm_WCP.conf",
+      "payload": "payload/wcp.json",
+      "mode": "0755",
+      "owner": "1000:1000",
+      "type": "modify",
+      "apply": "xml-node",
+      "reason": "service start reordered for a sooner Home screen, Android Auto and CarPlay"
+    }
+  ]
+}

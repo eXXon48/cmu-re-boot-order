@@ -1,0 +1,116 @@
+{
+ "ops": [
+  {
+   "set": {
+    "xpath": "//service[@name='mfid']/dependency[@value='jciBCA']/@value",
+    "value": "stage_3",
+    "reason": "mfid only talks to the Apple auth chip over I2C and serves /tmp/MFISocket; it does not use Bluetooth. Waiting for jciBCA (~33 s, behind bds) holds devicemanager and with it Android Auto. stage_3 (~24 s) keeps it out of the early HMI start."
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jcinavi']/dependency[@value='stage_navi']/@value",
+    "value": "jciCARPLAY",
+    "reason": "navigation is not needed for the first screen, Android Auto or CarPlay; start it after CarPlay, which already comes after the navigation stage"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='JVMM']/dependency[@value='stage_navi']/@value",
+    "value": "jciCARPLAY",
+    "reason": "navigation's Java VM; start it after CarPlay with the navigation service"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciMMUI']/dependency[@value='jciRadio']/@value",
+    "value": "audio_manager",
+    "reason": "the radio, AUX and CD screens of MMUI check whether their service runs and otherwise wait for its SM started event, so MMUI need not wait for them; MMUI calls audio_manager at start-up, so it waits for that instead (jciRadio, jciauxin and jciCD wait for it too)"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciMMUI']/dependency[@value='jciauxin']/@value",
+    "value": "audio_control",
+    "reason": "see the jciRadio dependency: the AUX screen waits for the jciauxin started event itself; audio_control already runs before audio_manager, so this adds no wait"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='emmc_mount']/dependency[@value='stage_3']/@value",
+    "value": "stage_1",
+    "reason": "it only mounts the read-only resources partition on eMMC; starting it early lets the update services that gate Android Auto start early too"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciRM']/dependency[@value='stage_3']/@value",
+    "value": "jciVBS",
+    "reason": "links no client library of another service; jciVBS comes after settings, so its only real needs are up"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciTestDiag']/dependency[@value='system_mazda_my14']/@value",
+    "value": "jciCARPLAY",
+    "reason": "start after CarPlay starts, which is after the Home screen, so it does not compete for flash reads with the Home screen services; jciCARPLAY waits for system_mazda_my14 through jciPA; only the diag/DVD screens use this service"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jcilvds_blm']/dependency[@value='stage_3']/@value",
+    "value": "jciPA",
+    "reason": "start after jciPA, after the Home screen and before jciCARPLAY, which links its client; jciPA waits for stage_3 through stage_bt; only jciTestDiag and jciCARPLAY use this service"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciUSBMS']/dependency[@value='devicemanager']/@value",
+    "value": "jciCARPLAY",
+    "reason": "start after CarPlay starts, which is after the Home screen, so it does not compete for flash reads with the Home screen services; jciCARPLAY waits for devicemanager itself; neither Android Auto nor CarPlay links its client"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciCDRP']/dependency[@value='jciRM']/@value",
+    "value": "jciPA",
+    "reason": "keeps its devicemanager dependency and starts after jciPA, after the Home screen and before jciCARPLAY as in the stock order (Android Auto and CarPlay link its client); jciRM starts at jciVBS, long before jciPA"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='bds']/dependency[@value='stage_3']/@value",
+    "value": "jciVBS",
+    "reason": "stage_3 is an empty gate script that waits for jciMMUI; bds needs only dmserver and settings (kept); stage_bt still waits for stage_3, so the Bluetooth services that also need stage_bt still start after the Home screen"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciDAB']/dependency[@value='settings']/@value",
+    "value": "jciPA",
+    "reason": "start after jciPA, which comes up at about the time of the Home screen, instead of right after audio_manager, so it does not compete for flash reads with the Home screen service; nothing in the service manager depends on it; its only clients are the MMUI adapter, which call it asynchronously and mark it available on the service manager SERVICE_STARTED event; FM radio, the last source at boot, stays early; jciVBS and audio_manager are still waited for"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciauxin']/dependency[@value='jciVBS']/@value",
+    "value": "jciPA",
+    "reason": "start after jciPA, which comes up at about the time of the Home screen, instead of right after audio_manager, so it does not compete for flash reads with the Home screen service; nothing in the service manager depends on it; its only clients are the MMUI adapter, which call it asynchronously and mark it available on the service manager SERVICE_STARTED event; FM radio, the last source at boot, stays early; audio_manager is still waited for"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='devicemanager']/@affinity_mask",
+    "value": "0x02",
+    "reason": "run devicemanager on the second CPU core; the first core is fully busy during boot while the second has spare time"
+   }
+  },
+  {
+   "set": {
+    "xpath": "//service[@name='jciAAPA']/@affinity_mask",
+    "value": "0x02",
+    "reason": "run jciAAPA on the second CPU core; the first core is fully busy during boot while the second has spare time"
+   }
+  }
+ ]
+}
